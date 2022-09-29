@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29709.97
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Payments", "Payments", "{AAD4FFEF-0ECD-424B-A274-831B4B0B3BF3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Loaders", "Loaders", "{524264B4-C62E-45F6-A149-AA17BF799761}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Drivers", "Drivers", "{01AFCD08-D324-4931-B389-A57AE073FCB8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PAY_UK_BARCLAYCARD_SMARTPAY", "Drivers\pay_uk_barclaycard_smartpay\PAY_UK_BARCLAYCARD_SMARTPAY.csproj", "{58C70BE9-DACB-442A-8A89-CF76F19A40AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Acrelec.Mockingbird.Barclaycard_Smartpay", "Loaders\Acrelec.Mockingbird.barclaycard_smartpay\Acrelec.Mockingbird.Barclaycard_Smartpay.csproj", "{4AADBC72-33F1-4FBB-9660-111D3C7368C5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58C70BE9-DACB-442A-8A89-CF76F19A40AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4AADBC72-33F1-4FBB-9660-111D3C7368C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4AADBC72-33F1-4FBB-9660-111D3C7368C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4AADBC72-33F1-4FBB-9660-111D3C7368C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4AADBC72-33F1-4FBB-9660-111D3C7368C5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{524264B4-C62E-45F6-A149-AA17BF799761} = {AAD4FFEF-0ECD-424B-A274-831B4B0B3BF3}
+		{01AFCD08-D324-4931-B389-A57AE073FCB8} = {AAD4FFEF-0ECD-424B-A274-831B4B0B3BF3}
+		{58C70BE9-DACB-442A-8A89-CF76F19A40AF} = {01AFCD08-D324-4931-B389-A57AE073FCB8}
+		{4AADBC72-33F1-4FBB-9660-111D3C7368C5} = {524264B4-C62E-45F6-A149-AA17BF799761}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C5FB5016-D794-4859-B7A4-91BBF4792822}
+	EndGlobalSection
+EndGlobal
