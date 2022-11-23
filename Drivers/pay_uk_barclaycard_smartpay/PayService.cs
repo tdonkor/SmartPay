@@ -7,6 +7,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using UK_BARCLAYCARD_SMARTPAY.Model;
 
 namespace UK_BARCLAYCARD_SMARTPAY
 {
@@ -223,86 +224,85 @@ namespace UK_BARCLAYCARD_SMARTPAY
                     return;
                 }
 
-                if (!wasCancelTigged || (wasCancelTigged && !isPaymentCancelSuccessful))
-                { 
-                    //Send payment progres to the Core.
-                    Log.Info(PAY_SERVICE_LOG, "        inserted card");
-                    coreCommunicator.SendMessage(CommunicatorMethods.ProgressMessage, new { PayProgress = new PayProgress { MessageClass = "CheckPINPADDisplay", Message = "Insert Card" } });
-
-                    Thread.Sleep(3000);
+                if (payRequest.Amount == 0)
+                {
+                    coreCommunicator.SendMessage(CommunicatorMethods.Pay, new { Status = -299, Description = "amount can't be zero.", PayDetails = new PayDetails() });
+                    Log.Info(PAY_SERVICE_LOG, "        amount can't be zero.");
+                    return;
                 }
 
-                if (!wasCancelTigged || (wasCancelTigged && !isPaymentCancelSuccessful))
+                if (string.IsNullOrEmpty(payRequest.TransactionReference))
                 {
-                    //Send payment progres to the Core.
-                    Log.Info(PAY_SERVICE_LOG, "        insert pin");
-                    coreCommunicator.SendMessage(CommunicatorMethods.ProgressMessage, new { PayProgress = new PayProgress { MessageClass = "CheckPINPADDisplay", Message = "Insert Pin" } });
-
-                    Thread.Sleep(3000);
-                }
-
-                if (!wasCancelTigged || (wasCancelTigged && !isPaymentCancelSuccessful))
-                {
-                    //Send payment progres to the Core.
-                    Log.Info(PAY_SERVICE_LOG, "        processing");
-                    coreCommunicator.SendMessage(CommunicatorMethods.ProgressMessage, new { PayProgress = new PayProgress { MessageClass = "CheckPINPADDisplay", Message = "Processing" } });
-
-                    Thread.Sleep((paymentDuration - 9) * 1000);
-                }
-
-                if (!wasCancelTigged || (wasCancelTigged && !isPaymentCancelSuccessful))
-                {
-                    //Send payment progres to the Core.
-                    Log.Info(PAY_SERVICE_LOG, "        retract card");
-                    coreCommunicator.SendMessage(CommunicatorMethods.ProgressMessage, new { PayProgress = new PayProgress { MessageClass = "CheckPINPADDisplay", Message = "Retract Card" } });
-
-                    Thread.Sleep(5000);
+                    coreCommunicator.SendMessage(CommunicatorMethods.Pay, new { Status = -298, Description = "transaction reference can't be empty.", PayDetails = new PayDetails() });
+                    Log.Info(PAY_SERVICE_LOG, "        transaction reference can't be empty.");
+                    return;
                 }
 
                 PayDetailsExtended payDetails = new PayDetailsExtended();
-                 
-                //treat answer type
-                if (wasCancelTigged && isPaymentCancelSuccessful)
-                {
-                    Log.Info(PAY_SERVICE_LOG, "        payment failed.");
-                    coreCommunicator.SendMessage(CommunicatorMethods.Pay, new { Status = 335, Description = "Failed payment. Canceled by user.", PayDetailsExtended = payDetails });
-                }
-                //always success
-                else if (paymentResult == "success")
-                {
-                    payDetails.TenderMediaId = paymentTenderMediaID;
-                    payDetails.PaidAmount = payRequest.Amount;
-                    payDetails.HasClientReceipt = true;
-                    payDetails.AuthorizationCode = "123456789";
-                    payDetails.CardholderName = "Test";
-                    payDetails.TransactionReference = "554878845568";
 
-                    //create receipt
-                    SaveTicket(string.Format("\r\n\r\n Payment Simulator Ticket\r\n\r\n   Amount:{0}\r\n   TenderID: {1}\r\n\r\n   {2}\r\n\r\n", payRequest.Amount, paymentTenderMediaID, DateTime.Now.ToString()));
+               
 
-                    Log.Info(PAY_SERVICE_LOG, "        credit card payment succeeded.");
-                    coreCommunicator.SendMessage(CommunicatorMethods.Pay, new { Status = 0, Description = "Successful payment", PayDetailsExtended = payDetails });
-                }
-                //always failure
-                else if (paymentResult == "failure")
+                // check the transaction details:
+                payDetails.PaidAmount = payRequest.Amount;
+                payDetails.TransactionReference = payRequest.TransactionReference;
+
+                Log.Info(PAY_SERVICE_LOG,       $"Amount = {payDetails.PaidAmount}.");
+                Log.Info(PAY_SERVICE_LOG,       $"Transaction Reference  = {payDetails.TransactionReference}.");
+                Log.Info(PAY_SERVICE_LOG,       "Payment method started...");
+
+                using (var api = new BarclayCardSmartpayApi())
                 {
-                    Log.Info(PAY_SERVICE_LOG, "        payment failed.");
-                    coreCommunicator.SendMessage(CommunicatorMethods.Pay, new { Status = 334, Description = "Failed payment", PayDetailsExtended = payDetails });                 
-                }
+                        var payResult = api.Pay(payDetails.PaidAmount, payDetails.TransactionReference, out TransactionReceipts payReceipts);
+                        Log.Info(PAY_SERVICE_LOG,       $"Pay Result: {payResult}");
 
-                return;
+                        if (payResult != DiagnosticErrMsg.OK)
+                        {
+                           // PrintErrorTicket(payDetails);
+
+                            Log.Info(PAY_SERVICE_LOG, "        payment failed.");
+                            coreCommunicator.SendMessage(CommunicatorMethods.Pay, new { Status = 334, Description = "Failed payment", PayDetailsExtended = payDetails });
+                        }
+                        else
+                        {
+                            Log.Info(PAY_SERVICE_LOG, "        payment succeeded.");
+
+                             //persist the Merchant transaction
+                             // PersistTransaction(payReceipts.MerchantReturnedReceipt, "MERCHANT");
+
+                            payDetails.HasClientReceipt = true;
+                            payDetails.HasMerchantReceipt = true;
+                            payDetails.TenderMediaId = paymentTenderMediaID;
+                            payDetails.PaidAmount = payRequest.Amount;
+                            payDetails.TransactionReference = payRequest.TransactionReference;
+
+                            //create receipt
+                            CreateTicket(payReceipts.CustomerReturnedReceipt, "CUSTOMER");
+                      
+                            Log.Info(PAY_SERVICE_LOG, "        credit card payment succeeded.");
+                            coreCommunicator.SendMessage(CommunicatorMethods.Pay, new { Status = 0, Description = "Successful payment", PayDetailsExtended = payDetails });
+                        }
+
+                         //treat answer type
+                         if (wasCancelTigged && isPaymentCancelSuccessful)
+                         {
+                              Log.Info(PAY_SERVICE_LOG, "        Payment was cancelled.");
+                             coreCommunicator.SendMessage(CommunicatorMethods.Pay, new { Status = 335, Description = "Failed payment. Canceled by user.", PayDetailsExtended = payDetails });
+                         }
+                    }
+
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Log.Info(PAY_SERVICE_LOG, string.Format("        {0}", ex.ToString()));
+                }
+                finally
+                {
+                    wasCancelTigged = false;
+                    IsCallbackMethodExecuting = false;
+                    Log.Info(PAY_SERVICE_LOG, "endcall Pay");
+                }
             }
-            catch (Exception ex)
-            {
-                Log.Info(PAY_SERVICE_LOG, string.Format("        {0}", ex.ToString()));
-            }
-            finally
-            {
-                wasCancelTigged = false;
-                IsCallbackMethodExecuting = false;
-                Log.Info(PAY_SERVICE_LOG, "endcall Pay");
-            }
-        }
 
         /// <summary>
         /// Callback method that is triggered when the cancel message is received from the Core
@@ -465,23 +465,23 @@ namespace UK_BARCLAYCARD_SMARTPAY
         /// Save te information received in the <paramref name="ticketDetails"/> in a file
         /// </summary>
         /// <param name="ticketDetails"></param>
-        private void SaveTicket(string ticketDetails)
-        {
-            try
-            {
+        //private void SaveTicket(string ticketDetails)
+        //{
+        //    try
+        //    {
 
-                //Delete the old ticket
-                if (File.Exists(ticketPath))
-                    File.Delete(ticketPath);
+        //        //Delete the old ticket
+        //        if (File.Exists(ticketPath))
+        //            File.Delete(ticketPath);
 
-                //Write the new ticket
-                File.WriteAllText(ticketPath, ticketDetails);
-            }
-            catch (Exception ex)
-            {
-                Log.Info(PAY_SERVICE_LOG, string.Format("{0}\r\n{1}", ex.Message, ex.StackTrace));
-            }
-        }
+        //        //Write the new ticket
+        //        File.WriteAllText(ticketPath, ticketDetails);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Log.Info(PAY_SERVICE_LOG, string.Format("{0}\r\n{1}", ex.Message, ex.StackTrace));
+        //    }
+        //}
 
         /// <summary>
         /// Deserialize the received json string into a ExecuteCommandRequest object
@@ -502,5 +502,75 @@ namespace UK_BARCLAYCARD_SMARTPAY
             }
             return null;
         }
+
+        private  void PrintErrorTicket(PayDetails payDetails)
+        {
+            //print the payment ticket for an error
+            //
+            CreateTicket("\nPayment failure with\nyour card or issuer\nNO payment has been taken.\n\nPlease try again with another card,\nor at a manned till.\n\n", "Error");
+            payDetails.HasClientReceipt = true;
+            payDetails.HasMerchantReceipt = true;
+        }
+
+        /// <summary>
+        /// Persist the transaction as Text file
+        /// with Customer and Merchant receiept
+        /// </summary>
+        /// <param name="result"></param>
+        private static void PersistTransaction(string receipt, string ticketType)
+        {
+            try
+            {
+                var config = AppConfiguration.Instance;
+                var outputDirectory = Path.GetFullPath(config.OutPath);
+                var outputPath = Path.Combine(outputDirectory, $"{DateTime.Now:yyyyMMddHHmmss}_{ticketType}_ticket.txt");
+
+                if (!Directory.Exists(outputDirectory))
+                {
+                    Directory.CreateDirectory(outputDirectory);
+                }
+
+                Log.Info($"Persisting {ticketType} to {outputPath}");
+
+                //Write the new ticket
+                File.WriteAllText(outputPath, receipt.ToString());
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Persist Transaction exception.");
+                Log.Error(ex);
+            }
+        }
+
+
+
+        private void CreateTicket(string ticket, string ticketType)
+        {
+            try
+            {
+
+              //  string ticketPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+                Log.Info($"Persisting {ticketType} to {ticketPath}");
+
+                //Delete the old ticket
+                if (File.Exists(ticketPath))
+                    File.Delete(ticketPath);
+
+
+                //Write the new ticket
+                File.WriteAllText(ticketPath, ticket);
+
+                //persist the transaction
+                PersistTransaction(ticket, ticketType);
+
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error {ticketType} persisting ticket.");
+                Log.Error(ex);
+            }
+        }
+
     }
 }

@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\..\..\Acrelec\Core\Peripherals\Payments\Drivers\PAY_UK_BARCLAYCARD_SMARTPAY\1.0.0.0\Driver\</OutputPath>
+    <OutputPath>C:\Acrelec\Core\Peripherals\Payments\Drivers\PAY_UK_BARCLAYCARD_SMARTPAY\1.0.0.0\Driver\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>

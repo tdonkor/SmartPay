@@ -16,12 +16,12 @@ namespace UK_BARCLAYCARD_SMARTPAY.Communicator
         /// <summary>
         /// Log name
         /// </summary>
-        private const string COMMUNICATOR_LOG = "Payment_UK_BARCLAYCARD_SMARTPAY_Communicator";
+        private const string COMMUNICATOR_LOG = "CoreCommunicator";
 
         /// <summary>
         /// The name of the Pipe server that the PAY_SIMULATOR.exe will open to receive messages from the Acrelec.Mockingbird.Core.Service.exe
         /// </summary>
-        private const string PAY_UK_BARCLAYCARD_SMARTPAY_PIPE_SERVER_NAME = "UK_BARCLAYCARD_SMARTPAY_ExePipeServer";
+        private const string PAY_APPLICATION_PIPE_SERVER_NAME = "UK_BARCLAYCARD_SMARTPAY_ExePipeServer";
 
         /// <summary>
         /// The name of the Pipe server that the Acrelec.Mockingbird.Core.Service.exe will open to receive messages from the PAY_SIMULATOR.exe
@@ -50,7 +50,7 @@ namespace UK_BARCLAYCARD_SMARTPAY.Communicator
 
             try
             {
-                pipeServer = new PipeServer(PAY_UK_BARCLAYCARD_SMARTPAY_PIPE_SERVER_NAME);
+                pipeServer = new PipeServer(PAY_APPLICATION_PIPE_SERVER_NAME);
                 pipeClient = new PipeClient();
                 pipeServer.OnReceiveMessage += DoOnReceiveMessage;
 

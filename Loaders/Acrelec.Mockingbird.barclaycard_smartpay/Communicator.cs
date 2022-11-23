@@ -16,12 +16,12 @@ namespace Acrelec.Mockingbird.Barclaycard_Smartpay
         /// <summary>
         /// Log name
         /// </summary>
-        private const string COMMUNICATOR_LOG = "Payment_UK_BARCLAYCARD_SMARTPAY_Communicator";
+        private const string COMMUNICATOR_LOG = "CoreCommunicator";
 
         /// <summary>
         /// The name of the Pipe server that the PAY_SIMULATOR.exe will open to receive messages from the Acrelec.Mockingbird.Core.Service.exe
         /// </summary>
-        private const string PAY_UK_BARCLAYCARD_SMARTPAY_PIPE_SERVER_NAME = "UK_BARCLAYCARD_SMARTPAY_ExePipeServer";
+        private const string PAY_SERVICE_PIPE_SERVER_NAME = "UK_BARCLAYCARD_SMARTPAY_ExePipeServer";
 
         /// <summary>
         /// The name of the Pipe server that the Acrelec.Mockingbird.Core.Service.exe will open to receive messages from the PAY_SIMULATOR.exe
@@ -138,7 +138,7 @@ namespace Acrelec.Mockingbird.Barclaycard_Smartpay
                 return true;
             
             //Send the message and check it the send was successful
-            if (pipeClient.SendMessage(PAY_UK_BARCLAYCARD_SMARTPAY_PIPE_SERVER_NAME, message))
+            if (pipeClient.SendMessage(PAY_SERVICE_PIPE_SERVER_NAME, message))
             {
                 logger.Info(COMMUNICATOR_LOG, "Sent (OK): " + message);
                 return true;

@@ -19,7 +19,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\..\..\Acrelec\Core\Peripherals\Payments\Drivers\PAY_UK_BARCLAYCARD_SMARTPAY\1.0.0.0\Driver\DriverExe\</OutputPath>
+    <OutputPath>C:\Acrelec\Core\Peripherals\Payments\Drivers\PAY_UK_BARCLAYCARD_SMARTPAY\1.0.0.0\Driver\DriverExe\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -59,9 +59,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AppConfiguration.cs" />
+    <Compile Include="BarclayCardSmartpayApi.cs" />
     <Compile Include="Communicator\CommunicatorMethods.cs" />
     <Compile Include="Communicator\CoreCommunicator.cs" />
     <Compile Include="Communicator\ICommunicatorCallbacks.cs" />
+    <Compile Include="Model\AppConfiguration.cs" />
     <Compile Include="Model\ExecuteCommandRequest.cs" />
     <Compile Include="Model\PayDetails.cs" />
     <Compile Include="Model\PayProgress.cs" />
@@ -69,10 +72,14 @@
     <Compile Include="PayService.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SmartPayOperations.cs" />
+    <Compile Include="TransactionInfo.cs" />
+    <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+    <None Include="PAY_UK_BARCLAYCARD_SMARTPAY.ini" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

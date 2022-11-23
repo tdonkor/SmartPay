@@ -22,9 +22,9 @@ namespace Acrelec.Mockingbird.Barclaycard_Smartpay
     {
         private const string PAYMENT_ID = "0";
 
-        private const string PAYMENT_LOG = "Payment_Service";
+        private const string PAYMENT_LOG = "UK_BARCLAYCARD_SMARTPAY_SERVICE";
 
-        private const string PAYMENT_NAME = "UK_BARCLAYCARD_SMARTPAY";
+        private const string PAYMENT_NAME = "PAY_UK_BARCLAYCARD_SMARTPAY";
 
         private const string PAYMENT_APPLICATION_NAME = "PAY_UK_BARCLAYCARD_SMARTPAY.exe";
 
@@ -57,7 +57,7 @@ namespace Acrelec.Mockingbird.Barclaycard_Smartpay
         /// <summary>
         /// Method will return the get minimum API version of the selected peripheral driver
         /// </summary>
-        public int MinAPILevel { get { return 9; } }
+        public int MinAPILevel { get { return 3; } }
 
         /// <summary>
         /// Method will check the get version of the Payment driver application
@@ -225,7 +225,7 @@ namespace Acrelec.Mockingbird.Barclaycard_Smartpay
             paymentDuration.ControlType = SettingDataType.Int;
             paymentDuration.ControlName = "Payment Duration";
             paymentDuration.RealName = "PaymentDuration";
-            paymentDuration.CurrentValue = "12"; 
+            paymentDuration.CurrentValue = "12";
             paymentDuration.ControlDescription = "Duration of payment in seconds";
 
             Dictionary<string, object> dict = new Dictionary<string, object>();
@@ -673,11 +673,11 @@ namespace Acrelec.Mockingbird.Barclaycard_Smartpay
             currentPaymentInitConfig.ConfigurationSettings.Clear();
             //Add the payment duration, payment result and payment tender media
             currentPaymentInitConfig.ConfigurationSettings.Add(comPort);
-            currentPaymentInitConfig.ConfigurationSettings.Add(paymentDuration);
-            currentPaymentInitConfig.ConfigurationSettings.Add(paymentResult);
-            currentPaymentInitConfig.ConfigurationSettings.Add(paymentCancelResult);            
-            currentPaymentInitConfig.ConfigurationSettings.Add(paymentExecuteCommandResult);            
-            currentPaymentInitConfig.ConfigurationSettings.Add(paymentTenderMediaID);
+            //currentPaymentInitConfig.ConfigurationSettings.Add(paymentDuration);
+            //currentPaymentInitConfig.ConfigurationSettings.Add(paymentResult);
+            //currentPaymentInitConfig.ConfigurationSettings.Add(paymentCancelResult);            
+            //currentPaymentInitConfig.ConfigurationSettings.Add(paymentExecuteCommandResult);            
+            //currentPaymentInitConfig.ConfigurationSettings.Add(paymentTenderMediaID);
 
             JObject result = new JObject();
             JArray printersArray = new JArray();
