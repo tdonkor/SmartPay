@@ -672,7 +672,7 @@ namespace Acrelec.Mockingbird.Barclaycard_Smartpay
             //clean the payment configuration
             currentPaymentInitConfig.ConfigurationSettings.Clear();
             //Add the payment duration, payment result and payment tender media
-            currentPaymentInitConfig.ConfigurationSettings.Add(comPort);
+            //currentPaymentInitConfig.ConfigurationSettings.Add(comPort);
             //currentPaymentInitConfig.ConfigurationSettings.Add(paymentDuration);
             //currentPaymentInitConfig.ConfigurationSettings.Add(paymentResult);
             //currentPaymentInitConfig.ConfigurationSettings.Add(paymentCancelResult);            

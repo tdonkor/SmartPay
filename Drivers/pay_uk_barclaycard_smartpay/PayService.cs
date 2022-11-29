@@ -257,9 +257,11 @@ namespace UK_BARCLAYCARD_SMARTPAY
 
                         if (payResult != DiagnosticErrMsg.OK)
                         {
-                           // PrintErrorTicket(payDetails);
+                        // PrintErrorTicket(payDetails);
+                        //create receipt
+                        CreateTicket(payReceipts.CustomerReturnedReceipt, "CUSTOMER");
 
-                            Log.Info(PAY_SERVICE_LOG, "        payment failed.");
+                        Log.Info(PAY_SERVICE_LOG, "        payment failed.");
                             coreCommunicator.SendMessage(CommunicatorMethods.Pay, new { Status = 334, Description = "Failed payment", PayDetailsExtended = payDetails });
                         }
                         else
@@ -280,6 +282,7 @@ namespace UK_BARCLAYCARD_SMARTPAY
                       
                             Log.Info(PAY_SERVICE_LOG, "        credit card payment succeeded.");
                             coreCommunicator.SendMessage(CommunicatorMethods.Pay, new { Status = 0, Description = "Successful payment", PayDetailsExtended = payDetails });
+
                         }
 
                          //treat answer type
@@ -326,12 +329,12 @@ namespace UK_BARCLAYCARD_SMARTPAY
             if (isPaymentCancelSuccessful)
             {
                 coreCommunicator.SendMessage(CommunicatorMethods.Cancel, new { Status = 0 });
-                Log.Info(PAY_SERVICE_LOG, "        successful cancelation.");
+                Log.Info(PAY_SERVICE_LOG, "        successful cancellation.");
             }
             else
             {
                 coreCommunicator.SendMessage(CommunicatorMethods.Cancel, new { Status = 1 });
-                Log.Info(PAY_SERVICE_LOG, "        failed cancelation.");
+                Log.Info(PAY_SERVICE_LOG, "        failed cancellation.");
             }
 
             Log.Info(PAY_SERVICE_LOG, "endcall Cancel");
@@ -530,7 +533,7 @@ namespace UK_BARCLAYCARD_SMARTPAY
                     Directory.CreateDirectory(outputDirectory);
                 }
 
-                Log.Info($"Persisting {ticketType} to {outputPath}");
+               // Log.Info($"Persisting {ticketType} to {outputPath}");
 
                 //Write the new ticket
                 File.WriteAllText(outputPath, receipt.ToString());
@@ -551,7 +554,7 @@ namespace UK_BARCLAYCARD_SMARTPAY
 
               //  string ticketPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-                Log.Info($"Persisting {ticketType} to {ticketPath}");
+               // Log.Info($"Persisting {ticketType} to {ticketPath}");
 
                 //Delete the old ticket
                 if (File.Exists(ticketPath))
@@ -560,6 +563,8 @@ namespace UK_BARCLAYCARD_SMARTPAY
 
                 //Write the new ticket
                 File.WriteAllText(ticketPath, ticket);
+
+                Log.Info($"Itcket Created: {ticketType}");
 
                 //persist the transaction
                 PersistTransaction(ticket, ticketType);

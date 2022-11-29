@@ -16,9 +16,11 @@ namespace UK_BARCLAYCARD_SMARTPAY
     public class BarclayCardSmartpayApi : IDisposable
     {
         //Trans_NUM details incrementing each time
-        static int number = 0;
-        string transNum = "000000";
-        const string transactionLimit = "9999998";
+       // static int number = 0;
+        //string transNum = "000000";
+        string transNum = string.Empty;
+
+        //const string transactionLimit = "9999998";
 
         //Reference variables
         //string toBeSearched = "reference=";
@@ -35,12 +37,9 @@ namespace UK_BARCLAYCARD_SMARTPAY
         // payment response flag
         private string paymentSuccessful = string.Empty;
 
-        //bool Authorisation successful flag
-        private bool authorisationFlag = false;
-
         // Data buffer for incoming data.
         //make large enough to take the largest return
-        byte[] bytes = new byte[4096];
+        byte[] bytes = new byte[4086];
 
         //Ini file data 
         AppConfiguration configFile;
@@ -48,6 +47,8 @@ namespace UK_BARCLAYCARD_SMARTPAY
         int country;
         int port;
         string sourceId;
+        string storeId;
+        string kioskNum;
 
 
         /// <summary>
@@ -65,12 +66,17 @@ namespace UK_BARCLAYCARD_SMARTPAY
             Log.Info($"Country:{configFile.Country} ");
             Log.Info($"Port:{configFile.Port} ");
             Log.Info($"SourceID:{configFile.SourceId} ");
+            Log.Info($"Kiosk Number:{configFile.KioskNumber} ");
+            Log.Info($"Store ID:{configFile.StoreId} ");
 
 
             currency = Convert.ToInt32(configFile.Currency);
             country = Convert.ToInt32(configFile.Country);
             port = Convert.ToInt32(configFile.Port);
             sourceId = configFile.SourceId;
+            kioskNum = configFile.KioskNumber;
+            storeId = configFile.StoreId;
+
             isSuccessful = DiagnosticErrMsg.OK;
 
             ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
@@ -105,21 +111,25 @@ namespace UK_BARCLAYCARD_SMARTPAY
             //check for a success or failure string from smartpay
             string submitPaymentResult = string.Empty;
             string finaliseResult = string.Empty;
-            string finaliseSettleResult = string.Empty;
-            string submitSettlePaymentResult = string.Empty;
-            string description = transactionRef;
+            //string finaliseSettleResult = string.Empty;
+            //string submitSettlePaymentResult = string.Empty;
+            string description = string.Empty;
 
             // increment transaction number
-            number++;
-            transNum = number.ToString().PadLeft(6, '0');
+            //number++;
+
+            // create the transaction number
+            // transNum = number.ToString().PadLeft(6, '0');
+            transNum = kioskNum + sourceId +  transactionRef + DateTime.Now.ToString("yyyyMMddHHmmss");
+
 
             //check for transNum max value
-            if (transNum == transactionLimit)
-            {
-                //reset back to beginning
-                number = 1;
-                transNum = number.ToString().PadLeft(6, '0');
-            }
+            //if (transNum == transactionLimit)
+            //{
+            //    //reset back to beginning
+            //    number = 1;
+            //    transNum = number.ToString().PadLeft(6, '0');
+            //}
 
             transactionReceipts = new TransactionReceipts();
 
@@ -131,9 +141,17 @@ namespace UK_BARCLAYCARD_SMARTPAY
                 throw new Exception("Error in Amount value...");
             }
 
+            if (string.IsNullOrEmpty(transactionRef))
+            {
+                throw new Exception("Transaction Reference Number can't be null or empty");
+            }
+
+            description =  "K"+ kioskNum + transactionRef;
+
             Log.Info($"Valid payment amount: {intAmount}");
+            Log.Info("Transaction Reference number : " + transactionRef);
             Log.Info("Transaction Number : " + transNum);
-            Log.Info("Transaction Ref (Description) : " + transactionRef);
+            Log.Info("Description : " + description);
 
             /****************************** Stage 1 **********************************
             *                                                                       
@@ -149,7 +167,7 @@ namespace UK_BARCLAYCARD_SMARTPAY
             // create and open Payment Socket 
             //////////////////////////////////
             Socket paymentSocket = CreateSocket();
-            Log.Info("paymentSocket Open: " + SocketConnected(paymentSocket));
+            Log.Info("PaymentSocket Open: " + SocketConnected(paymentSocket));
 
           /*********************** Stage 1 ***************************
            *                                                                       
@@ -169,7 +187,7 @@ namespace UK_BARCLAYCARD_SMARTPAY
 
                 if (submitPaymentResult.ToLower() == "success")
                 {
-                    Log.Info("Successful Payment submitted");
+                    Log.Info("**** Successful Payment Submitted ****");
                 }
                 else
                 {
@@ -182,7 +200,7 @@ namespace UK_BARCLAYCARD_SMARTPAY
             /// checkSocket closed
             /// ///////////////////
             /// 
-            Log.Info("paymentSocket Open: " + SocketConnected(paymentSocket));
+            Log.Info("PaymentSocket Open: " + SocketConnected(paymentSocket));
 
             /******************************** Stage 1***********************************
             *   
@@ -223,6 +241,10 @@ namespace UK_BARCLAYCARD_SMARTPAY
                         Log.Error("Merchant Receipt has Declined Transaction.");
                         isSuccessful = DiagnosticErrMsg.NOTOK;
                     }
+                    else
+                    {
+                        Log.Info("**** Merchant Receipt created ****");
+                    }
                 }
             }
 
@@ -239,7 +261,7 @@ namespace UK_BARCLAYCARD_SMARTPAY
             //create customer socket
             Socket customerSuccessSocket = CreateSocket();
 
-            Log.Info("customerSuccess Socket Open: " + SocketConnected(customerSuccessSocket));
+            Log.Info("CustomerSuccess Socket Open: " + SocketConnected(customerSuccessSocket));
 
             //process customerSuccess XML
             customerSuccessXML = PrintReciptResponse(transNum);
@@ -262,10 +284,14 @@ namespace UK_BARCLAYCARD_SMARTPAY
                         Log.Error(PayService.PAY_SERVICE_LOG, "Customer Receipt has Declined Transaction.");
                         isSuccessful = DiagnosticErrMsg.NOTOK;
                     }
+                    else
+                    {
+                        Log.Info("**** Customer Receipt created ****");
+                    }
                 }
             }
 
-            Log.Info("customerSuccess Socket Open: " + SocketConnected(customerSuccessSocket));
+            Log.Info("CustomerSuccess Socket Open: " + SocketConnected(customerSuccessSocket));
 
             /**************************************** Stage 2 ***********************************************************
             *                                                                                                           
@@ -276,7 +302,7 @@ namespace UK_BARCLAYCARD_SMARTPAY
 
             Socket processTransactionRespSocket = CreateSocket();
 
-            Log.Info("processTransactionRespSocket Socket Open: " + SocketConnected(processTransactionRespSocket));
+            Log.Info("ProcessTransactionRespSocket Socket Open: " + SocketConnected(processTransactionRespSocket));
             processTransRespSuccessXML = PrintReciptResponse(transNum);
 
             string processTransRespStr = sendToSmartPay(processTransactionRespSocket, processTransRespSuccessXML, "PROCESSTRANSACTIONRESPONSE");
@@ -300,7 +326,7 @@ namespace UK_BARCLAYCARD_SMARTPAY
                 }
             }
 
-            Log.Info("processTransRespSuccessXML Socket Open: " + SocketConnected(processTransactionRespSocket));
+            Log.Info("ProcessTransRespSuccessXML Socket Open: " + SocketConnected(processTransactionRespSocket));
 
 
 
@@ -337,29 +363,6 @@ namespace UK_BARCLAYCARD_SMARTPAY
             }
 
             Log.Info("Finalise Socket Open: " + SocketConnected(finaliseSocket));
-
-            // check if the Authorisation has been successful
-            if (isSuccessful == DiagnosticErrMsg.OK)
-                authorisationFlag = true;
-            else
-                authorisationFlag = false;
-
-           // WriteDataToFile(authorisationFlag);
-
-            Log.Info($"Authorisation result {authorisationFlag}");
-
-            if (authorisationFlag == false)
-            {
-                //authoriation has failed return to paymentService
-                //end payment process and  print out failure receipt.
-
-                Log.Error("\n***** Authorisation Check has failed. *****\n");
-                return isSuccessful;
-            }
-            else
-            {
-                Log.Info("\n***** Payment Authorisation Check has passed. *****\n");
-            }
 
             return isSuccessful;
         }// end of Pay
@@ -401,23 +404,23 @@ namespace UK_BARCLAYCARD_SMARTPAY
                 //////////////////////////////////////////////
                 /// Process Settlement transaction
                 /////////////////////////////////////////////
-                if ((operationStr == "PROCESSSETTLETRANSACTION"))
-                {
-                    do
-                    {
-                        bytesRec = sender.Receive(bytes);
-                        message = Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                        // Log.Info($"{operationStr} is {Encoding.ASCII.GetString(bytes, 0, bytesRec)}");
+                //if ((operationStr == "PROCESSSETTLETRANSACTION"))
+                //{
+                //    do
+                //    {
+                //        bytesRec = sender.Receive(bytes);
+                //        message = Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                //        // Log.Info($"{operationStr} is {Encoding.ASCII.GetString(bytes, 0, bytesRec)}");
 
 
-                        if (message.Contains("processTransactionResponse"))
-                        {
-                            Log.Info("************ Processs Settlement transaction response  received *************");
-                            return message;
-                        }
+                //        if (message.Contains("processTransactionResponse"))
+                //        {
+                //            Log.Info("************ Processs Settlement transaction response  received *************");
+                //            return message;
+                //        }
 
-                    } while (message != string.Empty);
-                }
+                //    } while (message != string.Empty);
+                //}
 
                 //////////////////////////////////////////////
                 /// Process transaction or customer receipt
@@ -468,7 +471,7 @@ namespace UK_BARCLAYCARD_SMARTPAY
 
                         if (message.Contains("processTransactionResponse"))
                         {
-                            Log.Info("**** Processs transaction Called ****");
+                            Log.Info("**** Processs Transaction Called ****");
                             return message;
                         }
 
@@ -478,19 +481,19 @@ namespace UK_BARCLAYCARD_SMARTPAY
                 //////////////////////////////////////////////
                 /// Transaction VOID
                 /////////////////////////////////////////////
-                if ((operationStr == "VOID"))
-                {
+                //if ((operationStr == "VOID"))
+                //{
 
-                    bytesRec = sender.Receive(bytes);
-                    message = Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                    Console.WriteLine($"{operationStr} is {message}");
+                //    bytesRec = sender.Receive(bytes);
+                //    message = Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                //    Console.WriteLine($"{operationStr} is {message}");
 
-                    if (message.Contains("CANCELLED"))
-                    {
-                        Log.Info("****** Transaction VOID  successful *****");
-                        return message;
-                    }
-                }
+                //    if (message.Contains("CANCELLED"))
+                //    {
+                //        Log.Info("****** Transaction VOID  successful *****");
+                //        return message;
+                //    }
+                //}
 
             }
             catch (ArgumentNullException ane)
