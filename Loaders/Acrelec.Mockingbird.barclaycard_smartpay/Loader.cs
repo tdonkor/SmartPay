@@ -20,7 +20,7 @@ namespace Acrelec.Mockingbird.Barclaycard_Smartpay
     [Export(typeof(IPayment))]
     public class Loader : IPaymentCardExtendedDetails, ICommunicatorCallbacks, IPaymentExtendsCancelPayment, IPaymentExtendsExecuteCommand
     {
-        private const string PAYMENT_ID = "0";
+        private const string PAYMENT_ID = "826025";
 
         private const string PAYMENT_LOG = "UK_BARCLAYCARD_SMARTPAY_SERVICE";
 
@@ -442,10 +442,13 @@ namespace Acrelec.Mockingbird.Barclaycard_Smartpay
 
                 logger.Info(PAYMENT_LOG, "Pay: Pay finished.");
 
+                //Update the pay details
+                payDetailsExtended = this.payDetails;
+
                 if (WasPaySuccessful)
                 {
                     //Update the pay details
-                    payDetailsExtended = this.payDetails;
+                    // payDetailsExtended = this.payDetails;
 
                     paymentStatus.CurrentStatus = PeripheralStatus.PeripheralOK().Status;
                     paymentStatus.ErrorCodesDescription = PeripheralStatus.PeripheralOK().Description;
@@ -742,11 +745,14 @@ namespace Acrelec.Mockingbird.Barclaycard_Smartpay
             {
                 ResponseParameters responseParameters = JsonConvert.DeserializeObject<ResponseParameters>(parameters.ToString());
 
+                //Update the payment details with the ones received from the payment terminal
+                payDetails = responseParameters.PayDetailsExtended;
+
                 //Check the status property of the parameters object to see if the Pay was successful
                 if (responseParameters.Status == 0)
                 {
                     //Update the payment details with the ones received from the payment terminal
-                    payDetails = responseParameters.PayDetailsExtended;
+                   // payDetails = responseParameters.PayDetailsExtended;
                     WasPaySuccessful = true;
                 }
                 else

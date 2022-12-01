@@ -115,14 +115,6 @@ namespace UK_BARCLAYCARD_SMARTPAY.Model
             }
         }
 
-        public string StoreId
-        {
-            get
-            {
-                return _entries.FirstOrDefault(_ => _.Key == "STORE_ID")?.Value ?? "1111";
-            }
-        }
-
         public int HeartbeatInterval
         {
             get

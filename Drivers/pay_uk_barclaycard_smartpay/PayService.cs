@@ -252,17 +252,22 @@ namespace UK_BARCLAYCARD_SMARTPAY
 
                 using (var api = new BarclayCardSmartpayApi())
                 {
-                        var payResult = api.Pay(payDetails.PaidAmount, payDetails.TransactionReference, out TransactionReceipts payReceipts);
+                        var payResult = api.Pay(payDetails.PaidAmount, payDetails.TransactionReference, out TransactionReceipts payReceipts, out string transNum);
                         Log.Info(PAY_SERVICE_LOG,       $"Pay Result: {payResult}");
 
                         if (payResult != DiagnosticErrMsg.OK)
                         {
-                        // PrintErrorTicket(payDetails);
-                        //create receipt
-                        CreateTicket(payReceipts.CustomerReturnedReceipt, "CUSTOMER");
 
-                        Log.Info(PAY_SERVICE_LOG, "        payment failed.");
-                            coreCommunicator.SendMessage(CommunicatorMethods.Pay, new { Status = 334, Description = "Failed payment", PayDetailsExtended = payDetails });
+                            //create error receipt
+                            payDetails.HasClientReceipt = true;
+
+                            if (payReceipts.CustomerReturnedReceipt == null)
+                                PrintErrorTicket(payDetails, transNum);
+                            else
+                                 CreateTicket(payReceipts.CustomerReturnedReceipt, "CUSTOMER");
+
+                            Log.Info(PAY_SERVICE_LOG, "        payment failed.");
+                                coreCommunicator.SendMessage(CommunicatorMethods.Pay, new { Status = 334, Description = "Failed payment", PayDetailsExtended = payDetails });
                         }
                         else
                         {
@@ -272,7 +277,6 @@ namespace UK_BARCLAYCARD_SMARTPAY
                              // PersistTransaction(payReceipts.MerchantReturnedReceipt, "MERCHANT");
 
                             payDetails.HasClientReceipt = true;
-                            payDetails.HasMerchantReceipt = true;
                             payDetails.TenderMediaId = paymentTenderMediaID;
                             payDetails.PaidAmount = payRequest.Amount;
                             payDetails.TransactionReference = payRequest.TransactionReference;
@@ -464,27 +468,6 @@ namespace UK_BARCLAYCARD_SMARTPAY
             return null;
         }
 
-        /// <summary>
-        /// Save te information received in the <paramref name="ticketDetails"/> in a file
-        /// </summary>
-        /// <param name="ticketDetails"></param>
-        //private void SaveTicket(string ticketDetails)
-        //{
-        //    try
-        //    {
-
-        //        //Delete the old ticket
-        //        if (File.Exists(ticketPath))
-        //            File.Delete(ticketPath);
-
-        //        //Write the new ticket
-        //        File.WriteAllText(ticketPath, ticketDetails);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Log.Info(PAY_SERVICE_LOG, string.Format("{0}\r\n{1}", ex.Message, ex.StackTrace));
-        //    }
-        //}
 
         /// <summary>
         /// Deserialize the received json string into a ExecuteCommandRequest object
@@ -506,11 +489,18 @@ namespace UK_BARCLAYCARD_SMARTPAY
             return null;
         }
 
-        private  void PrintErrorTicket(PayDetails payDetails)
+        private  void PrintErrorTicket(PayDetailsExtended payDetails, string transNum)
         {
             //print the payment ticket for an error
             //
-            CreateTicket("\nPayment failure with\nyour card or issuer\nNO payment has been taken.\n\nPlease try again with another card,\nor at a manned till.\n\n", "Error");
+            CreateTicket("\nPayment failure with\nyour card or issuer" +
+                "\nNO payment has been taken." +
+                "\n\nPlease try again with another card,\nor at a manned till.\n\n" +
+                 "TOTAL: " + payDetails.PaidAmount + "\n" +
+                 "Trans No: " + transNum + "\n" +
+                 "Date: "+ DateTime.Now.ToString("dd/mm/yy hh:mm:ss") + "\n\n" +
+                 "Please retain for your records\n\n" + "CUSTOMER COPY", "CUSTOMER_ERROR");
+
             payDetails.HasClientReceipt = true;
             payDetails.HasMerchantReceipt = true;
         }
@@ -545,17 +535,15 @@ namespace UK_BARCLAYCARD_SMARTPAY
             }
         }
 
-
-
+        /// <summary>
+        /// creates the customer or merchant ticket
+        /// </summary>
+        /// <param name="ticket"></param>
+        /// <param name="ticketType"></param>
         private void CreateTicket(string ticket, string ticketType)
         {
             try
             {
-
-              //  string ticketPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
-               // Log.Info($"Persisting {ticketType} to {ticketPath}");
-
                 //Delete the old ticket
                 if (File.Exists(ticketPath))
                     File.Delete(ticketPath);
